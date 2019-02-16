@@ -1,0 +1,70 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html" />
+    <title>Knockout : Registration Form Example</title>
+
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+
+    <script type="text/javascript"
+    src="javascript/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript"
+    src="javascript/knockout-3.4.2.js"></script>
+    <script type="text/javascript"
+    src="bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript"
+    src="javascript/registrationform.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="page-header">
+        <h1>Registration Form</h1>
+      </div>
+      <!-- Registration form goes here -->
+      <form data-bind="submit: RegistrationForm.submit">
+          <fieldset>
+              <div class="row">
+                <div class="col-md-12">
+                  <h4>Personal Information</h4>
+                </div>
+              </div>
+              <div class="form-group">
+                  <label for="titleInput">Title</label>
+                  <div class="dropdown">
+                    <button class="btn btn-default dropdown-toggle" type="button" id="titleInput" data-toggle="dropdown" aria-expanded="true" >
+                        <span data-bind="text: RegistrationForm.titleSelect"> </span>
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu" role="menu" aria-labelledby="titleInput" data-bind="foreach: RegistrationForm.titleOptions">
+                      <li role="presentation">
+                          <a role="menuitem" tabindex="-1" data-bind="text: value, click: setTitle"></a>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label for="firstNameInput">First Name</label>
+                    <input type="text" class="form-control" data-bind="value: RegistrationForm.customer.personalInfo.firstName" id="firstNameInput" placeholder="Enter first name">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label for="middleNameInput">Middle Name</label>
+                    <input type="text" class="form-control" data-bind="value: RegistrationForm.customer.personalInfo.middleName" id="middleNameInput" placeholder="Enter middle name">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label for="lastNameInput">Last Name</label>
+                    <input type="text" class="form-control" data-bind="value: RegistrationForm.customer.personalInfo.lastName" id="lastNameInput" placeholder="Enter last name">
+                  </div>
+                </div>
+              </div>
+            </fieldset>
+          <button type="Submit" class="btn btn-primary">Submit</button>
+      </form>
+    </div>
+  </body>
+</html>
