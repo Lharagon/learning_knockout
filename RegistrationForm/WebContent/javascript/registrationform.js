@@ -1,48 +1,38 @@
 /* Module for Registration form application */
 var RegistrationForm = function () {
 
-    ko.extenders.required = function(target, option) {
-        target.hasError = ko.observable(false);
-
-        target.subscribe(function(newValue) {
-            target.hasError(newValue ? false : true);
-        });
-
-        return target;
-    }
-
     /* add members here */
     var customer = {
         personalInfo: {
-            title: ko.observable(),
-            firstName: ko.observable().extend({ required: null }),
+            title: ko.observable().extend({ required: true }),
+            firstName: ko.observable().extend({ required: true }),
             middleName: ko.observable(),
-            lastName: ko.observable()
+            lastName: ko.observable().extend({ required: true })
         },
         contactDetails: {
-            phoneNumber: ko.observable(),
-            emailAddress: ko.observable(),
-            preferredContact: ko.observable()
+            phoneNumber: ko.observable().extend({required: true, minLength: 4, maxLength: 9, number: true}),
+            emailAddress: ko.observable().extend({required: true, email: true}),
+            preferredContact: ko.observable().extend({required: true})
         },
         address: {
             residential: {
-                street: ko.observable(),
-                city: ko.observable(),
-                postCode: ko.observable(),
-                country: ko.observable()
+                street: ko.observable().extend({required: true}),
+                city: ko.observable().extend({required: true}),
+                postCode: ko.observable().extend({required: true, maxLength: 4, number: true}),
+                country: ko.observable().extend({required: true})
             },
             postal: {
-                type: ko.observable(),
+                type: ko.observable().extend({required: true}),
                 streetAddress: {
                     street: ko.observable(),
                     city: ko.observable(),
-                    postCode: ko.observable(),
+                    postCode: ko.observable().extend({maxLength: 4, number: true}),
                     country: ko.observable()
                 },
                 poBoxAddress: {
-                    poBox: ko.observable(),
+                    poBox: ko.observable().extend({maxLength: 6, number: true}),
                     city: ko.observable(),
-                    postCode: ko.observable(),
+                    postCode: ko.observable().extend({maxLength: 4, number: true}),
                     country: ko.observable()
                 }
             }
@@ -76,7 +66,12 @@ var RegistrationForm = function () {
     ];
 
     var addCreditCard = function() {
-        customer.creditCards.push({name: ko.observable(), number: ko.observable(), expiryDate: ko.observable()});
+        var card = {name: ko.observable().extend({required: true}),
+                    number: ko.observable().extend({required: true, number: true}),
+                    expiryDate: ko.observable().extend({required: true, pattern: '^(0[1-9]|1[012])/\\d\\d$'})};
+        // create validation group for the card
+        card.errors = ko.validation.group(card)
+        customer.creditCards.push(card);
     };
 
     var deleteCreditCard = function(card) {
@@ -86,14 +81,25 @@ var RegistrationForm = function () {
 
     var init = function () {
         /* add code to initialize this module */
+        // configure validation
+        configureValidation();
+        // Add first credit card
         addCreditCard();
+        // apply ko bindings
         ko.applyBindings(RegistrationForm);
     };
 
     // form submission
     var submit = function() {
-        console.log("The form is submitted");
-        console.log(ko.toJSON(customer));
+        var creditCardError = checkCreditCardsForErrors();
+        var staticFieldError = checkStaticFieldsForErrors();
+
+        if(creditCardError && staticFieldError) {
+            console.log("customer model is valid.");
+            console.log(ko.toJSON(customer));
+        } else {
+            console.log("Customer model has errors");
+        }
     };
 
     var clear = function() {
@@ -114,6 +120,62 @@ var RegistrationForm = function () {
                 traverseAndClearModel(val);
             }
         })
+    }
+
+    var configureValidation = function() {
+        //init and config the validation plugin
+        ko.validation.init({
+            errorElementClass: 'has-error',
+            errorMessageClass: 'help-block'
+        });
+
+        applyConditionalValidation();
+        // group errors
+        customer.errors = ko.validation.group(customer, {deep: true});
+    };
+
+    var isStreetAddress = function() {
+        return customer.address.postal.type() == "street";
+    }
+
+    var isPoBoxAddress = function() {
+        return customer.address.postal.type() == "pobox";
+    }
+
+    /* method applies conditional validation to the model */
+    var applyConditionalValidation = function () {
+      //postal street address fields
+        customer.address.postal.streetAddress.street.extend({ required: {onlyIf: isStreetAddress}});
+        customer.address.postal.streetAddress.city.extend({ required: {onlyIf: isStreetAddress}});
+        customer.address.postal.streetAddress.postCode.extend({ required: {onlyIf: isStreetAddress}});
+        customer.address.postal.streetAddress.country.extend({ required: {onlyIf: isStreetAddress}});
+
+        //postal PO Box address fields
+        customer.address.postal.poBoxAddress.poBox.extend({ required: {onlyIf: isPoBoxAddress}});
+        customer.address.postal.poBoxAddress.city.extend({ required: {onlyIf: isPoBoxAddress}});
+        customer.address.postal.poBoxAddress.postCode.extend({ required: {onlyIf: isPoBoxAddress}});
+        customer.address.postal.poBoxAddress.country.extend({ required: {onlyIf: isPoBoxAddress}});
+    };
+
+    //returns false if any credit card has errors
+    //true otherwise
+    var checkCreditCardsForErrors = function() {
+        var valid = true;
+        ko.utils.arrayForEach(customer.creditCards(), function(card) {
+            if(card.errors().length > 0) {
+                valid = false;
+                card.errors.showAllMessages();
+            }
+        });
+        return valid;
+    }
+
+    var checkStaticFieldsForErrors = function() {
+        if (customer.errors().length > 0) {
+            customer.errors.showAllMessages();
+            return false;
+        }
+        return true;
     }
 
     var titleSelect = ko.pureComputed(function() {
